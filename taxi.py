@@ -1,7 +1,5 @@
 import gymnasium as gym
 import numpy as np
-import matplotlib.pyplot as plt
-import time
 
 alpha = 0.1 # Learning rate
 gamma = 0.9 # Discount factor (how much rewards are valued)
@@ -18,8 +16,9 @@ print(env.render())
 action_size = env.action_space.n
 state_size = env.observation_space.n
 qtable = np.zeros([state_size, action_size])
+print(qtable)
 
-def manual():
+'''def manual():
     # Blue = passenger, purple = destination, yellow = taxi
     while not done:
         print(env.render())
@@ -28,9 +27,10 @@ def manual():
         state, reward, done, truncated, info = env.step(action)
         time.sleep(1.0)
         print('')
-        print(f'Observations: number of actions={num_of_actions}, reward={reward}, done={done}')
+        print(f'Observations: number of actions={num_of_actions}, reward={reward}, done={done}')'''
 
 
+# Training loop
 for episodes in range(episodes):
     state = env.reset()[0]
     done = False
@@ -56,3 +56,32 @@ for episodes in range(episodes):
         state = next_state
     
 print("Training completed.")
+
+# Evaluation loop
+total_rewards = []
+total_steps = []
+eval_episodes = 10 
+max_steps = 200 # Maximum number of steps per episode
+
+for episode in range(eval_episodes):
+    state = env.reset()[0]
+    total_reward = 0
+    steps = 0
+    done = False
+
+    while not done and steps < max_steps:
+        action = np.argmax(qtable[state])  # Always exploit in evaluation phase
+        next_state, reward, done, truncated, info = env.step(action)
+        total_reward += reward
+        steps += 1
+        state = next_state
+
+    total_rewards.append(total_reward)
+    total_steps.append(steps)
+
+# Compute and print the average total reward and average number of steps
+average_reward = np.mean(total_rewards)
+average_steps = np.mean(total_steps)
+
+print(f"Average Total Reward: {average_reward}")
+print(f"Average Steps Taken: {average_steps}")
