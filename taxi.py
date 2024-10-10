@@ -1,30 +1,20 @@
 import gymnasium as gym
 import numpy as np
 
-alpha = 0.8 # Learning rate
-gamma = 0.6 # Discount factor (how much rewards are valued)
-epsilon = 0.9  # Exploration rate
-episodes = 1000 # Number of training episodes
-
-'''def manual():
-    # Blue = passenger, purple = destination, yellow = taxi
-    while not done:
-        print(env.render())
-        action = int(input('0/south 1/north 2/east 3/west 4/pickup 5/drop off: '))
-        num_of_actions = num_of_actions + 1
-        state, reward, done, truncated, info = env.step(action)
-        time.sleep(1.0)
-        print('')
-        print(f'Observations: number of actions={num_of_actions}, reward={reward}, done={done}')'''
+alpha = 0.4 # Learning rate
+gamma = 0.9 # Discount factor (how much rewards are valued)
+epsilon = 0.7  # Exploration rate at start
+episodes = 2000 # Number of training episodes
 
 def train(env, qtable, episodes, alpha, gamma, epsilon):
+    min_epsilon = 0.01
+    epsilon_decay = 0.995 
+
     # Training loop
     for episode in range(episodes):
         state = env.reset()[0]
         done = False
         num_of_actions = 0
-        min_epsilon = 0.01
-        epsilon_decay = 0.995 
 
         while not done:
             if np.random.uniform(0,1) < epsilon:
@@ -35,15 +25,15 @@ def train(env, qtable, episodes, alpha, gamma, epsilon):
                 action = np.argmax(qtable[state])
 
             next_state, reward, done, truncated, info = env.step(action)
-            num_of_actions = num_of_actions + 1
+            num_of_actions += 1
 
-            # Q-learning equation
+            # Update Q-table
             qtable[state, action] = qtable[state, action] + alpha * (
                 reward + gamma * np.max(qtable[next_state]) - qtable[state, action])
 
             state = next_state
 
-            # Epsilon decay: epsilon value is slowly reduced over time, to stable the results
+            # Decay epsilon to reduce exploration over time
             epsilon = max(min_epsilon, epsilon * epsilon_decay)
         
     print("Training completed.")
@@ -64,7 +54,7 @@ def evaluate(env, qtable):
         done = False
 
         while not done and steps < max_steps:
-            action = np.argmax(qtable[state])  # Always exploit in evaluation phase
+            action = np.argmax(qtable[state])  # Exploit in evaluation
             next_state, reward, done, truncated, info = env.step(action)
             total_reward += reward
             steps += 1
@@ -77,8 +67,10 @@ def evaluate(env, qtable):
     average_reward = np.mean(total_rewards)
     average_steps = np.mean(total_steps)
 
-    print(f"Average Total Reward: {average_reward}")
-    print(f"Average Steps Taken: {average_steps}")
+    print(f"Average total reward: {average_reward}")
+    print(f"Average steps taken: {average_steps}")
+
+    return
 
 def main():
     # Create gymnasium environment
